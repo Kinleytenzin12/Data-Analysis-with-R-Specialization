@@ -1,0 +1,205 @@
+---
+title: "Bureau of Transportation Statistics"
+output: word_document
+date: '2022-07-27'
+---
+
+## Introduction
+
+In this lab we explore flights, specifically a random sample of domestic flights that departed from the three major New York City airport in 2013. We will generate simple graphical and numerical summaries of data on these flights and explore delay times. As this is a large data set, along the way you’ll also learn the indispensable skills of data processing and subsetting.
+
+
+```{r}
+library(statsr)
+library(dplyr)
+library(ggplot2)
+```
+
+## Data
+
+The Bureau of Transportation Statistics (BTS) is a statistical agency that is a part of the Research and Innovative Technology Administration (RITA). As its name implies, BTS collects and makes available transportation data, such as the flights data we will be working with in this lab.
+
+```{r}
+data(nycflights)
+```
+
+To view the names of the variables, type the command
+
+```{r}
+names(nycflights)
+```
+
+A very useful function for taking a quick peek at your data frame, and viewing its dimensions and data types is str, which stands for structure.
+
+
+```{r}
+str(nycflights)
+```
+
+### Seven verbs
+
+The dplyr package offers seven verbs (functions) for basic data manipulation:
+
+filter()
+arrange()
+select()
+distinct()
+mutate()
+summarise()
+sample_n()
+
+### Analysis 
+
+```{r}
+ggplot(data = nycflights, aes(x = dep_delay)) +
+  geom_histogram()
+```
+
+```{r}
+ggplot(data = nycflights, aes(x = dep_delay)) +
+  geom_histogram(binwidth = 15)
+```
+
+```{r}
+ggplot(data = nycflights, aes(x = dep_delay)) +
+  geom_histogram(binwidth = 150)
+```
+
+If we want to focus on departure delays of flights headed to RDU only, we need to first filter the data for flights headed to RDU (dest == "RDU") and then make a histogram of only departure delays of only those flights.
+
+```{r}
+rdu_flights <- nycflights %>%
+  filter(dest == 'RDU')
+ggplot(data = rdu_flights, aes(x=dep_delay)) +
+  geom_histogram(binwidth = 30)
+
+```
+
+Note that in the summarise function we created a list of two elements. The names of these elements are user defined, like mean_dd, sd_dd, n, and you could customize these names as you like (just don’t use spaces in your names). Calculating these summary statistics also require that you know the function calls. Note that n() reports the sample size.
+
+```{r}
+rdu_flights %>%
+  summarise(mean_dd = mean(dep_delay), sd_dd = sd(dep_delay),n= n())
+```
+We can also filter based on multiple criteria. Suppose we are interested in flights headed to San Francisco (SFO) in February:
+
+```{r}
+sfo_feb_flights <- nycflights %>%
+  filter(dest == "SFO", month == 2)
+dim(sfo_feb_flights)
+```
+
+### Make a histogram and calculate appropriate summary statistics for arrival delays of sfo_feb_flights. Which of the following is false?
+
+```{r}
+ggplot(data = sfo_feb_flights, aes(x=dep_delay))+
+  geom_histogram(binwidth = 30) 
+```
+
+### Another useful functionality is being able to quickly calculate summary statistics for various groups in your data frame. For example, we can modify the above command using the group_by function to get the same summary stats for each origin airport:
+
+```{r}
+rdu_flights %>%
+  group_by(origin)%>%
+  summarise(mean_dd = mean(dep_delay), sd_dd = sd(dep_delay),n=n())
+```
+
+### Calculate the median and interquartile range for arr_delays of flights in the sfo_feb_flights data frame, grouped by carrier. Which carrier has the highest IQR of arrival delays?
+
+```{r}
+sfo_feb_flights%>%
+  group_by(carrier)%>%
+  summarise(iqr = IQR(arr_delay))%>%
+  arrange(desc(iqr))
+```
+
+## Departure delays over months
+
+```{r}
+nycflights %>%
+  group_by(month) %>%
+  summarise(mean_dd = mean(dep_delay)) %>%
+  arrange(desc(mean_dd))
+```
+### We can also visualize the distributions of departure delays across months using side-by-side box plots:
+
+```{r}
+ggplot(nycflights, aes(x = factor(month), y = dep_delay)) +
+  geom_boxplot()
+
+```
+
+There is some new syntax here: We want departure delays on the y-axis and the months on the x-axis to produce side-by-side box plots. Side-by-side box plots require a categorical variable on the x-axis, however in the data frame month is stored as a numerical variable (numbers 1 - 12). Therefore we can force R to treat this variable as categorical, what R calls a factor, variable with factor(month).
+
+
+## On time departure rate for NYC airports
+
+```{r}
+nycflights <- nycflights%>%
+  mutate(dep_type = ifelse(dep_delay < 5, 'on time', 'delayed'))
+```
+
+```{r}
+nycflights %>%
+  group_by(origin)%>%
+  summarise(ot_dep_rate = sum(dep_type == 'on time')/n())%>%
+  arrange(desc(ot_dep_rate))
+```
+We can also visualize the distribution of on on time departure rate across the three airports using a segmented bar plot.
+
+```{r}
+
+ggplot(data=nycflights, aes(x=origin, fill =dep_type))+
+  geom_bar()
+```
+
+
+Mutate the data frame so that it includes a new variable that contains the average speed, avg_speed traveled by the plane for each flight (in mph). What is the tail number of the plane with the fastest avg_speed? Hint: Average speed can be calculated as distance divided by number of hours of travel, and note that air_time is given in minutes. If you just want to show the avg_speed and tailnum and none of the other variables, use the select function at the end of your pipe to select just these two variables with select(avg_speed, tailnum). You can Google this tail number to find out more about the aircraft.
+
+
+```{r}
+flight_speed <- nycflights %>%
+  mutate(average_speed = distance*60/air_time)
+```
+
+
+```{r}
+flight_speed %>%
+  select(average_speed,tailnum) %>%
+  arrange(desc(average_speed))
+```
+
+##
+
+```{r}
+ggplot(data= flight_speed, aes(x=distance, y = average_speed))+
+  geom_point() 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
