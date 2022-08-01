@@ -1,0 +1,106 @@
+---
+title: "Week 2 Lab"
+output: html_document
+date: '2022-08-01'
+---
+
+### Library
+
+```{r}
+library(statsr)
+library(dplyr)
+library(ggplot2)
+data(nycflights)
+
+```
+
+
+Create a new data frame that includes flights headed to SFO in February, and save this data frame as sfo_feb_flights. How many flights meet these criteria? 
+
+
+```{r}
+sfo_feb_flights <- nycflights %>%
+  filter(dest == "SFO", month == 2)
+dim(sfo_feb_flights)
+
+```
+
+Make a histogram and calculate appropriate summary statistics for arrival delays of sfo_feb_flights. Which of the following is false? 
+
+```{r}
+ggplot(data = sfo_feb_flights, aes(x=arr_delay))+
+  geom_histogram(binwidth = 15)
+  
+```
+
+
+
+Calculate the median and interquartile range for arr_delays of flights in the sfo_feb_flights data frame, grouped by carrier. Which carrier has the highest IQR of arrival delays? 
+
+```{r}
+sfo_feb_flights %>%
+  group_by(carrier) %>%
+  summarise(iqr = IQR(arr_delay)) %>%
+  arrange(desc(iqr))
+```
+Considering the data from all the NYC airports, which month has the highest average departure delay?
+
+
+```{r}
+nycflights %>%
+  group_by(month)%>%
+  summarise(mean_dd = mean(dep_delay)) %>%
+  arrange(desc(mean_dd))
+  
+```
+
+Which month has the highest median departure delay from an NYC airport?
+
+```{r}
+nycflights %>%
+  group_by(month) %>%
+  summarise(median_dd = median(dep_delay)) %>%
+  arrange(desc(median_dd))
+```
+
+If you were selecting an airport simply based on on time departure percentage, which NYC airport would you choose to fly out of?
+
+```{r}
+nycflights <- nycflights %>%
+  mutate(dep_type = ifelse(dep_delay <5, 'on time', 'delayed'))
+
+```
+
+```{r}
+nycflights %>%
+  group_by(origin)%>%
+  summarise(ot_dep_rate = sum(dep_type == 'on time')/n()) %>%
+  arrange(desc(ot_dep_rate))
+```
+
+Mutate the data frame so that it includes a new variable that contains the average speed, avg_speed traveled by the plane for each journey (in mph). What is the tail number of the plane with the fastest avg_speed? Hint: Average speed can be calculated as distance divided by number of hours of travel, and note that air_time is given in minutes. If you just want to show the avg_speed and tailnum and none of the other variables, use the select function at the end of your pipe to select just these two variables with select(avg_speed, tailnum). You can google this tail number to find out more about the aircraft.
+
+```{r}
+nycflights <- nycflights %>%
+  mutate(avg_speed = (distance * 60)/air_time)
+
+nycflights %>%
+  select(avg_speed, tailnum)%>%
+  arrange(desc(avg_speed))
+  
+```
+Make a scatterplot of avg_speed vs. distance. Which of the following is true about the relationship between average speed and distance. 
+
+```{r}
+ggplot(data= nycflights, aes(x=distance, y = avg_speed))+ geom_point() 
+```
+
+```{r}
+final_q <- nycflights %>%
+  mutate(on_time = ifelse(arr_delay <= 0, 'on time', 'delayed'))
+
+final_q%>%
+  group_by(dep_type) %>%
+  summarise(ot_arr_rate = sum(on_time == 'on time')/n())
+```
+
