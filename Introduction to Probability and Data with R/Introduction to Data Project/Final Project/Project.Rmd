@@ -1,0 +1,186 @@
+---
+title: "Behavioral Risk Factor Surveillance System (BRFSS)"
+output: html_document
+date: "2022-08-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Setup
+
+### Load packages
+
+Loading the packages needed for data visualization
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+### Load data
+
+```{r load-data}
+load('brfss2013.gz')
+```
+
+* * *
+
+## Part 1: Data
+
+#### Information regarding the data
+
+According to CDC website,the Behavioral Risk Factor Surveillance System (BRFSS) is an annual telephone survey of more than 400000 people in the United States per year.It collects state data about U.S. residents regarding their health-related risk behaviors,chronic health conditions, and use of preventive services. As its name implies, the BRFSS is designed to identify risk factors in the adult population and report emerging health trends. For example, respondents are asked about their diet and weekly physical activity, their HIV/AIDS status, possible tobacco use,and even their level of healthcare coverage.
+
+* * *
+
+## Part 2:Exploratory data analysis 
+
+Dataset consists of 491775 observations(rows) and 330 variables(columns)
+```{r}
+data <- brfss2013
+dim(data)
+#names(data)
+```
+
+ Removing the NA enteries from data.
+
+```{r}
+data.new <- data%>%
+  filter(!is.na(physhlth),!is.na(sleptim1),!is.na(sex))%>%
+  select(physhlth, sleptim1, menthlth, sex)
+```
+
+
+```{r}
+ggplot(data = data.new, aes(x= sleptim1, y=physhlth, color=sex)) +
+  geom_point()+scale_fill_manual(values = c('red','seagreen3'))
+```
+
+```{r}
+ggplot(data=data.new,aes(x=sleptim1,y=menthlth,color=sex))+
+  geom_point()+scale_fill_manual(values = c("red","seagreen3"))
+```
+
+
+
+### 1:Correlation between the frequency of Smoking and High Blood Pressure
+
+```{r,  message = FALSE}
+data_1 <- data%>%  
+  select(sex  , smokday2, bphigh4)%>%
+  filter(!is.na(sex),!is.na(smokday2),!is.na(bphigh4))%>%
+  group_by(sex,smokday2,bphigh4)%>%
+  summarise(count=n())%>%
+  mutate(perc = count/sum(count))
+
+```
+
+```{r}
+ggplot(data_1, aes(x = factor(smokday2), y = perc * 100, fill = factor(bphigh4))) +
+  geom_bar(stat = 'identity', width = 0.7) + labs(x = 'Smokeing Frequency', y = 'Percentage', 
+                                                  fill = 'Blood Pressure') + theme_minimal(base_size = 10)+
+  facet_grid(. ~sex)
+
+```
+
+
+### Correlation between the frequency of Smoking and Diabetes
+
+```{r,  message = FALSE}
+data_2 <- data%>%
+  select(sex, smokday2, diabete3)%>%
+  filter(!is.na(sex),!is.na(smokday2),!is.na(diabete3))%>%
+  group_by(sex, smokday2, diabete3)%>%
+  summarise(count = n())%>%
+  mutate(perc = count/sum(count))
+```
+
+```{r}
+ggplot(data_2, aes(x = factor(smokday2), y = perc * 100, fill = factor(diabete3))) + 
+  geom_bar(stat = 'identity', width = 0.7) +
+  labs(x = 'Smoking Frequency', y = 'Percentage', fill = 'Diagonsed with Diabetes')+
+  theme_minimal(base_size = 10) + facet_grid(. ~sex)
+```
+
+### Correlation between Income Levels of people and whether they own or rent their home
+
+
+```{r, message=FALSE}
+data_3 <- brfss2013 %>%  select(sex  , income2 , renthom1) %>%
+    filter(!is.na(sex), !is.na(income2),!is.na(renthom1)) %>%
+    group_by(sex,income2,renthom1) %>%
+    summarise(count=n()) %>%
+    mutate(perc=count/sum(count))
+
+ggplot(data_3, aes(x = factor(renthom1), y = perc*100, fill = factor(income2))) +
+geom_bar(stat="identity", width = 0.7) +
+labs(x = "Type of Home", y = "Percentage", fill = "Income Range") +
+theme_minimal(base_size = 10) +
+facet_grid(. ~  sex)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
